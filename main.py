@@ -10,9 +10,8 @@ app = FastAPI()
 EMAIL = "24f1002692@ds.study.iitm.ac.in"
 ASSIGNED_ORIGIN = "https://app-lothjb.example.com"
 
-# Add the exam page's own origin here once you find it (see instructions below)
 EXTRA_ALLOWED_ORIGINS = {
-    "https://exam.sanand.workers.dev",  # placeholder - replace after checking real exam origin
+    "https://exam.sanand.workers.dev",
 }
 
 ALLOWED_ORIGINS = {ASSIGNED_ORIGIN} | EXTRA_ALLOWED_ORIGINS
@@ -54,6 +53,7 @@ class CORSAndRateLimitMiddleware(BaseHTTPMiddleware):
                 resp.headers["Access-Control-Allow-Origin"] = origin
                 resp.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
                 resp.headers["Access-Control-Allow-Headers"] = "*"
+                resp.headers["Access-Control-Expose-Headers"] = "X-Request-ID"
                 resp.headers["Vary"] = "Origin"
             return resp
 
@@ -62,12 +62,14 @@ class CORSAndRateLimitMiddleware(BaseHTTPMiddleware):
             resp = JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
             if origin in ALLOWED_ORIGINS:
                 resp.headers["Access-Control-Allow-Origin"] = origin
+                resp.headers["Access-Control-Expose-Headers"] = "X-Request-ID"
                 resp.headers["Vary"] = "Origin"
             return resp
 
         response = await call_next(request)
         if origin in ALLOWED_ORIGINS:
             response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Expose-Headers"] = "X-Request-ID"
             response.headers["Vary"] = "Origin"
         return response
 
